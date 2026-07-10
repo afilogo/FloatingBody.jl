@@ -24,12 +24,13 @@ mutable struct FloatingBodySim{NMODES,NBODY,NOWCs,NVARS,MAT,OWC<:AbstractPTO,EXC
     # Mooring force
     mooring::MOOR
     rloc_fixed::R
+    n_lines::RealT
     # others
     A_w::Vector{RealT}
     wave_power::RealT
     # B11::RealT # temporary mooring ELIMINAR DEPOIS
     function FloatingBodySim{RealT}(modes::AbstractVector, vec_PTOs::AbstractVector;
-        body_file::String, rad_file::String, wave_spectra::WaveSpectra, mooring::Union{Nothing,ODEIntegrator}=nothing) where RealT
+        body_file::String, rad_file::String, wave_spectra::WaveSpectra, mooring::Union{Nothing,ODEIntegrator}=nothing, n_lines::Real) where RealT
 
         modes_tup = tuple(modes...)
 
@@ -155,7 +156,7 @@ mutable struct FloatingBodySim{NMODES,NBODY,NOWCs,NVARS,MAT,OWC<:AbstractPTO,EXC
                 mooring_ = B11
             else
                 semis = mooring.p.semis
-                N_MOOR = length(semis) # number of moorings (should be SemidiscretizationMooringLine)
+                N_MOOR = length(semis) # number of moorings
                 println("Mooring system found: $N_MOOR lines")
 
                 if N_MOOR == 1
@@ -178,18 +179,7 @@ mutable struct FloatingBodySim{NMODES,NBODY,NOWCs,NVARS,MAT,OWC<:AbstractPTO,EXC
             C[6, 6] = C2121
             C[7, 7] = C2727
             C[8, 8] = C3333
-
             C = SMatrix{N_MODES,N_MODES}(C)
-            # C = @SMatrix RealT[
-            #     C11 0 0 0 0 0 0 0
-            #     0 C33 C35 0 0 0 0 0
-            #     0 C53 C55 0 0 0 0 0
-            #     0 0 0 C99 0 0 0 0
-            #     0 0 0 0 C1515 0 0 0
-            #     0 0 0 0 0 C2121 0 0
-            #     0 0 0 0 0 0 C2727 0
-            #     0 0 0 0 0 0 0 C3333
-            # ]
 
             Mg_Inv = inv(Mg)
             Mg_Inv = SMatrix{N_MODES,N_MODES}(Mg_Inv)
@@ -217,7 +207,7 @@ mutable struct FloatingBodySim{NMODES,NBODY,NOWCs,NVARS,MAT,OWC<:AbstractPTO,EXC
                 C,
                 radiation,
                 wave_spectra, excitation,
-                mooring_, rloc_fixed,
+                mooring_, rloc_fixed, n_lines,
                 A_w, wave_power)
         end
     end

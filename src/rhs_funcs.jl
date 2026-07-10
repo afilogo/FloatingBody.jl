@@ -3,7 +3,7 @@
 
 function rhs_f_static!(du, u, buoy_sim::FloatingBodySim{NMODES}, t) where NMODES
     @unpack modes = buoy_sim
-    @unpack Mg_Inv, C = buoy_sim
+    @unpack Mg_Inv, C, n_lines = buoy_sim
 
     # Reset du
     fill!(du, zero(eltype(du)))
@@ -15,7 +15,7 @@ function rhs_f_static!(du, u, buoy_sim::FloatingBodySim{NMODES}, t) where NMODES
     f_pto = calc_pto_force!(du, u, t, buoy_sim)
     f_moor = calc_mooring_force!(du, u, t, buoy_sim)
 
-    du1a8 = Mg_Inv * (f_restore + f_pto + f_moor)
+    du1a8 = Mg_Inv * (f_restore + f_pto + (f_moor .* n_lines))
 
     @inbounds for (i, j) in enumerate(velrange(buoy_sim))
         du[j] = du1a8[i]
@@ -28,7 +28,7 @@ function rhs_f_static!(du, u, buoy_sim::FloatingBodySim{NMODES}, t) where NMODES
 end
 function rhs_f!(du, u, buoy_sim::FloatingBodySim{NMODES}, t) where NMODES
     @unpack modes = buoy_sim
-    @unpack Mg, Mg_Inv, C = buoy_sim
+    @unpack Mg, Mg_Inv, C, n_lines = buoy_sim
 
     # Reset du
     fill!(du, zero(eltype(du)))
@@ -40,23 +40,21 @@ function rhs_f!(du, u, buoy_sim::FloatingBodySim{NMODES}, t) where NMODES
     # f_exc = calc_excitation_force!(du, u, t, buoy_sim)
     # f_rad = calc_radiation_force!(du, u, t, buoy_sim)
     f_pto = calc_pto_force!(du, u, t, buoy_sim)
-    # f_moor = SVector(- buoy_sim.mooring * u[1], 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0) # u[1] = v1 # TEMPORARIO  # SVector(- buoy_sim.B11 * u[1], 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0) 
     f_moor = calc_mooring_force!(du, u, t, buoy_sim)
 
-    if t > 250.0
-        f_rad = calc_radiation_force!(du, u, t-250.0, buoy_sim)
-        f_exc = calc_excitation_force!(du, u, t-250.0, buoy_sim)
+    t_ramp = 250.0
+    if t > t_ramp # ramp dynamic simul
+        f_rad = calc_radiation_force!(du, u, t-t_ramp, buoy_sim)
+        f_exc = calc_excitation_force!(du, u, t-t_ramp, buoy_sim)
 
-        f_rad_ = f_rad .* SVector(1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0)
-        f_moor2 = SVector(- 2.0 * 0.6 * sqrt(C[1, 1] * Mg[1, 1]) * u[1] * 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+        f_rad_ = f_rad .* SVector(1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0) # neglect radiation 9
+        f_damp_surge = SVector(- 2.0 * 0.6 * sqrt(C[1, 1] * Mg[1, 1]) * u[1] * 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
 
-        du1a8 = Mg_Inv * (f_restore + f_exc + f_rad_ + f_pto + f_moor .* 3 + f_moor2)
+        du1a8 = Mg_Inv * (f_restore + f_exc + f_rad_ + f_pto + (f_moor .* n_lines) + f_damp_surge)
     else
-        du1a8 = Mg_Inv * (f_restore + f_pto + f_moor)
+        du1a8 = Mg_Inv * (f_restore + f_pto + (f_moor .* n_lines))
     end
-
-    # f_rad_ = f_rad .* SVector(1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0)
-    # du1a8 = Mg_Inv * (f_restore + f_exc + f_rad + f_pto + f_moor)
+    # du1a8 = Mg_Inv * (f_restore + f_exc + f_rad_ + f_pto + (f_moor .* n_lines) + f_damp_surge)
 
     @inbounds for (i, j) in enumerate(velrange(buoy_sim))
         du[j] = du1a8[i]
@@ -94,8 +92,6 @@ end
 
             r_f = point_position(r_buoy_, r_global) # assumes buoy is also at 0,0 on global at start...
             v_f = point_velocity(v_buoy_, ω, r_global) # ω = θ_dot
-
-            # println(r_f)
 
             input_bc = SVector(r_f..., v_f...) # INVERTER ORDEM # DEPOIS PARAMETRIZAR...
             set_boundary_conditions!(moor_integ, 1, i, new_time, input_bc)
