@@ -1,9 +1,41 @@
 name = "FloatingBody"
 uuid = "eed0c581-e972-4d5e-a671-e58a1574fb72"
-authors = ["afilogo <afilogo96@gmail.com> and contributors"]
 version = "1.0.0-DEV"
+authors = ["afilogo <afilogo96@gmail.com> and contributors"]
+
+[deps]
+BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+HDF5 = "f67ccb44-e63f-5c2f-98bd-6dc0ccc4ba2f"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+MuladdMacro = "46d2c3a1-f734-5fdb-9937-b9b9aeba4221"
+OrdinaryDiffEqCore = "bbf590c4-e513-4bbe-9b18-05decba2e5d8"
+Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
+Rotations = "6038ab10-8711-5258-84ad-4b1120ba62dc"
+SciMLBase = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
+SimpleUnPack = "ce78b400-467f-4804-87d8-8f486da07d0a"
+Static = "aedffcd0-7271-4cad-89d0-dc628f76c6d3"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
+BenchmarkTools = "1.8.0"
+Dates = "1.11.0"
+HDF5 = "0.17.3"
+LinearAlgebra = "1.12.0"
+MuladdMacro = "0.2.6"
+OrdinaryDiffEqCore = "3.33.1"
+Printf = "1.11.0"
+Random = "1.11.0"
+Reexport = "1.2.2"
+Rotations = "1.7.1"
+SciMLBase = "2.155.0"
+SimpleUnPack = "1.1.0"
+Static = "1.4.2"
+StaticArrays = "1.9.18"
+Statistics = "1.11.1"
 julia = "1.12"
 
 [extras]
