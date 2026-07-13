@@ -25,12 +25,13 @@ mutable struct FloatingBodySim{NMODES,NBODY,NOWCs,NVARS,MAT,OWC<:AbstractPTO,EXC
     mooring::MOOR
     rloc_fixed::R
     n_lines::RealT
+    moor_ramp::RealT
     # others
     A_w::Vector{RealT}
     wave_power::RealT
     # B11::RealT # temporary mooring ELIMINAR DEPOIS
     function FloatingBodySim{RealT}(modes::AbstractVector, vec_PTOs::AbstractVector;
-        body_file::String, rad_file::String, wave_spectra::WaveSpectra, mooring::Union{Nothing,ODEIntegrator}=nothing, n_lines::Real) where RealT
+        body_file::String, rad_file::String, wave_spectra::WaveSpectra, mooring::Union{Nothing,ODEIntegrator}=nothing, n_lines::Real, cg3_shift::Real = 0.0, moor_ramp::Real = 250.0) where RealT
 
         modes_tup = tuple(modes...)
 
@@ -71,7 +72,7 @@ mutable struct FloatingBodySim{NMODES,NBODY,NOWCs,NVARS,MAT,OWC<:AbstractPTO,EXC
 
             # Main body (body_0)
             cg_body_0 = Vector{RealT}(read(h5f["data/CG/body_0"]) .* ULength)
-            cg_body_0[3] -= 10.0
+            cg_body_0[3] += cg3_shift
 
             sf3 = get_scaling_factor_Aij(3, 3, ρ_WATER, ULength)
             buoy_mass = read(h5f["data/disp_vol/body_0"]) * sf3
@@ -207,7 +208,7 @@ mutable struct FloatingBodySim{NMODES,NBODY,NOWCs,NVARS,MAT,OWC<:AbstractPTO,EXC
                 C,
                 radiation,
                 wave_spectra, excitation,
-                mooring_, rloc_fixed, n_lines,
+                mooring_, rloc_fixed, n_lines, moor_ramp,
                 A_w, wave_power)
         end
     end
@@ -235,7 +236,5 @@ end
 @inline velrange_mainbody(::FloatingBodySim{NMODES,NBODY}) where {NMODES,NBODY} = Base.OneTo(NBODY)
 @inline posrange_mainbody(::FloatingBodySim{NMODES,NBODY}) where {NMODES,NBODY} = (NMODES+1):(NMODES+NBODY)
 
-
-
 #
-end # muladd
+end # muladd 

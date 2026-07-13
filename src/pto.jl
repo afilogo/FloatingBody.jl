@@ -69,7 +69,7 @@ struct BiradialTurbine{RealT<:Real} <: AbstractTurbine
         Pi_bep = Pi_Psi_bir(Psi_bep)
         pfa = ρ_ref * diam^5 * Pi_bep
 
-        d_turb_ref = 0.5 # O QUE E ISTO?
+        d_turb_ref = 0.5 
 
         I_turb = I_turb_ref * (diam / d_turb_ref)^5
         new{RealT}(diam, convert(RealT, Psi_max), convert(RealT, Psi_bep), convert(RealT, I_turb), convert(RealT, pfa), convert(RealT, pfb), convert(RealT, P_rated))

@@ -28,7 +28,7 @@ function rhs_f_static!(du, u, buoy_sim::FloatingBodySim{NMODES}, t) where NMODES
 end
 function rhs_f!(du, u, buoy_sim::FloatingBodySim{NMODES}, t) where NMODES
     @unpack modes = buoy_sim
-    @unpack Mg, Mg_Inv, C, n_lines = buoy_sim
+    @unpack Mg, Mg_Inv, C, n_lines, moor_ramp = buoy_sim
 
     # Reset du
     fill!(du, zero(eltype(du)))
@@ -42,7 +42,7 @@ function rhs_f!(du, u, buoy_sim::FloatingBodySim{NMODES}, t) where NMODES
     f_pto = calc_pto_force!(du, u, t, buoy_sim)
     f_moor = calc_mooring_force!(du, u, t, buoy_sim)
 
-    t_ramp = 250.0
+    t_ramp = moor_ramp
     if t > t_ramp # ramp dynamic simul
         f_rad = calc_radiation_force!(du, u, t-t_ramp, buoy_sim)
         f_exc = calc_excitation_force!(du, u, t-t_ramp, buoy_sim)
