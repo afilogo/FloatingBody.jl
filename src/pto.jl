@@ -10,7 +10,8 @@ mutable struct OWC_piston{RealT<:Real,TURB<:AbstractTurbine} <: AbstractPTO
 
     # Turbine
     turb::TURB
-    const n_turbines::Int
+    const n_series_turb::Int
+    const n_paral_turb::Int
 
     # Geometry
     const chamber_height::RealT
@@ -20,7 +21,8 @@ end
 #     println("`chamber_area` not provided")
 #     return OWC_piston{RealT,typeof(turbine)}(idx, turbine, n_turbines, convert(RealT, chamber_height), convert(RealT, 0.0)) # area changed later
 # end
-function OWC_piston{RealT}(idx::Int; chamber_height::Real, chamber_area::Real, n_turbines::Int, turbine::AbstractTurbine) where RealT
+function OWC_piston{RealT}(idx::Int; chamber_height::Real, chamber_area::Real, n_series_turb::Int, n_paral_turb::Int, turbine::AbstractTurbine) where RealT
+    @assert n_paral_turb*n_series_turb > 0 "Number of turbines must be greater than zero"
     return OWC_piston{RealT,typeof(turbine)}(idx, turbine, n_turbines, convert(RealT, chamber_height), convert(RealT, chamber_area))
 end
 @inline ndofs(owc::OWC_piston) = 1
@@ -42,7 +44,7 @@ struct WellsTurbine{RealT<:Real} <: AbstractTurbine
         Pi_bep = Pi_Psi_bir(Psi_bep)
         pfa = ρ_ref * diam^5 * Pi_bep
 
-        d_turb_ref = 0.5 # O QUE E ISTO?
+        d_turb_ref = 0.5 
 
         I_turb = I_turb_ref * (diam / d_turb_ref)^5
         new{RealT}(diam, convert(RealT, Psi_max), convert(RealT, Psi_bep), convert(RealT, I_turb), convert(RealT, pfa), convert(RealT, pfb), convert(RealT, P_rated))
@@ -69,7 +71,7 @@ struct BiradialTurbine{RealT<:Real} <: AbstractTurbine
         Pi_bep = Pi_Psi_bir(Psi_bep)
         pfa = ρ_ref * diam^5 * Pi_bep
 
-        d_turb_ref = 0.5 
+        d_turb_ref = 0.5 # O QUE E ISTO?
 
         I_turb = I_turb_ref * (diam / d_turb_ref)^5
         new{RealT}(diam, convert(RealT, Psi_max), convert(RealT, Psi_bep), convert(RealT, I_turb), convert(RealT, pfa), convert(RealT, pfb), convert(RealT, P_rated))
@@ -86,7 +88,7 @@ end
 @inline extract_E_turb(u, turb::BiradialTurbine) = u[3]
 
 @inline function rhs_pto!(du_pto, u_pto, t, z_piston_rel, v_piston_rel, PTO::OWC_piston)
-    @unpack turb, chamber_area, chamber_height, n_turbines = PTO
+    @unpack turb, chamber_area, chamber_height, n_series_turb, n_paral_turb = PTO
 
     # p_rel, Ω, E_turb = u_pto # State variables: p, Ω, E (3dof)
     p_rel = extract_p_rel(u_pto, turb)
@@ -101,7 +103,7 @@ end
     dot_V_chamber = chamber_area * v_piston_rel
     mass_chamber = ρ_chamber * V_chamber
 
-    Ψ = p_rel / (ρ_inlet * (Ω * turb.diam)^2)
+    Ψ = p_rel / (ρ_inlet * (Ω * turb.diam)^2) / n_series_turb
 
     Φ = Phi_Psi(turb, Ψ)
     Π = Pi_Psi(turb, Ψ)
@@ -110,7 +112,7 @@ end
     pfb = turb.pfb
 
     mass_flow_single = ρ_inlet * Ω * turb.diam^3 * Φ
-    mass_flow_total = mass_flow_single * n_turbines
+    mass_flow_total = mass_flow_single * n_paral_turb 
 
     P_turb_single = ρ_inlet * Ω^3 * turb.diam^5 * Π
     P_gen_single = pfa * Ω^pfb
@@ -121,7 +123,7 @@ end
 
     du_pto[1] = -γ_GAS * p_abs * (varA + varB)
     du_pto[2] = (P_turb_single - P_gen_single) * denom2_1
-    du_pto[3] = P_turb_single * n_turbines
+    du_pto[3] = P_turb_single * n_paral_turb * n_series_turb
 
     return nothing
 end
