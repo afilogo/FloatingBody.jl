@@ -105,7 +105,7 @@ end
 
     Ψ = p_rel / (ρ_inlet * (Ω * turb.diam)^2) / n_series_turb
 
-    Φ = Phi_Psi(turb, Ψ)
+    Φ = Phi_Psi(turb, Ψ) 
     Π = Pi_Psi(turb, Ψ)
 
     pfa = turb.pfa

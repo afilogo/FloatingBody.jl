@@ -66,10 +66,12 @@ function compute_output!(out, sol::SciMLBase.ODESolution, buoy_sim::FloatingBody
         turbs_diam = ntuple(i -> turbs[i].diam, length(OWCs_tup))
         turbs_pfa = ntuple(i -> turbs[i].pfa, length(OWCs_tup))
         turbs_pfb = ntuple(i -> turbs[i].pfb, length(OWCs_tup))
+        
+        owcs_nturb_series = ntuple(i -> OWCs_tup[i].n_series_turb, length(OWCs_tup))
+        owcs_nturb_paral = ntuple(i -> OWCs_tup[i].n_paral_turb, length(OWCs_tup))
 
-        owcs_nturb = ntuple(i -> OWCs_tup[i].n_turbines, length(OWCs_tup))
 
-        Ψ = @. p_rel/(ρ_inlet*(Ω^2*turbs_diam^2))
+        Ψ = @. p_rel/(ρ_inlet*(Ω^2*turbs_diam^2))/owcs_nturb_series
 
         Φ = similar(Ψ)
         Π = similar(Ψ)
@@ -77,14 +79,14 @@ function compute_output!(out, sol::SciMLBase.ODESolution, buoy_sim::FloatingBody
 
         @inbounds for k in eachindex(Ψ)
             Φ[k] = Phi_Psi(turbs[k], Ψ[k])
-            Π[k] = Pi_Psi(turbs[k], Ψ[k])
+            Π[k] = Pi_Psi(turbs[k], Ψ[k]) * owcs_nturb_series[k]
             η[k] = eta_Psi(turbs[k], Ψ[k])
         end
 
-        Q_turb = @. owcs_nturb * Ω * turbs_diam^3 * Φ
+        Q_turb = @. owcs_nturb_paral * Ω * turbs_diam^3 * Φ
         P_pneu = @. p_rel*Q_turb
-        P_turb = @. owcs_nturb*ρ_inlet*Ω^3*turbs_diam^5*Π
-        P_gen = @. owcs_nturb*turbs_pfa*Ω^turbs_pfb
+        P_turb = @. owcs_nturb_paral*ρ_inlet*Ω^3*turbs_diam^5*Π
+        P_gen = @. owcs_nturb_paral*turbs_pfa*Ω^turbs_pfb
 
         exc = buoy_sim.excitation
 
