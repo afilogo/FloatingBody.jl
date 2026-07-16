@@ -23,7 +23,7 @@ end
 # end
 function OWC_piston{RealT}(idx::Int; chamber_height::Real, chamber_area::Real, n_series_turb::Int, n_paral_turb::Int, turbine::AbstractTurbine) where RealT
     @assert n_paral_turb*n_series_turb > 0 "Number of turbines must be greater than zero"
-    return OWC_piston{RealT,typeof(turbine)}(idx, turbine, n_turbines, convert(RealT, chamber_height), convert(RealT, chamber_area))
+    return OWC_piston{RealT,typeof(turbine)}(idx, turbine, n_series_turb, n_paral_turb, convert(RealT, chamber_height), convert(RealT, chamber_area))
 end
 @inline ndofs(owc::OWC_piston) = 1
 
