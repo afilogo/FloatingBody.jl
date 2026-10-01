@@ -47,10 +47,9 @@ function rhs_f!(du, u, buoy_sim::FloatingBodySim{NMODES}, t) where NMODES
         f_rad = calc_radiation_force!(du, u, t-t_ramp, buoy_sim)
         f_exc = calc_excitation_force!(du, u, t-t_ramp, buoy_sim)
 
-        f_rad_ = f_rad .* SVector(1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0) # neglect radiation 9
-        f_damp_surge = SVector(- 2.0 * 0.6 * sqrt(C[1, 1] * Mg[1, 1]) * u[1] * 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+        f_rad_ = f_rad .* SVector(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
 
-        du1a8 = Mg_Inv * (f_restore + f_exc + f_rad_ + f_pto + (f_moor .* n_lines) + f_damp_surge)
+        du1a8 = Mg_Inv * (f_restore + f_exc + f_rad_ + f_pto + (f_moor .* n_lines))
     else
         du1a8 = Mg_Inv * (f_restore + f_pto + (f_moor .* n_lines))
     end
@@ -117,7 +116,7 @@ end
         ωt = exc.omega[k] * t
         @simd for j = 1:NMODES
             forces[j] += exc.mag[k, j] *
-                         cos(ωt + exc.phase[k, j])
+                cos(ωt + exc.phase[k, j])
         end
     end
 

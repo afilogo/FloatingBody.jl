@@ -31,7 +31,7 @@ mutable struct FloatingBodySim{NMODES,NBODY,NOWCs,NVARS,MAT,OWC<:AbstractPTO,EXC
     wave_power::RealT
     # B11::RealT # temporary mooring ELIMINAR DEPOIS
     function FloatingBodySim{RealT}(modes::AbstractVector, vec_PTOs::AbstractVector;
-        body_file::String, rad_file::String, wave_spectra::WaveSpectra, mooring::Union{Nothing,ODEIntegrator}=nothing, n_lines::Real, cg3_shift::Real = 0.0, moor_ramp::Real = 250.0) where RealT
+        body_file::String, rad_file::String, wave_spectra::WaveSpectra, mooring::ODEIntegrator, n_lines::Real, cg3_shift::Real=0.0, moor_ramp::Real=250.0) where RealT
 
         modes_tup = tuple(modes...)
 
@@ -147,30 +147,21 @@ mutable struct FloatingBodySim{NMODES,NBODY,NOWCs,NVARS,MAT,OWC<:AbstractPTO,EXC
             end
             Mg = M .+ Ainf
 
-            C11 = 0.1 * C33
             # Mooring
-            if isnothing(mooring)
-                B11 = 2.0 * 0.6 * sqrt(C11 * Mg[1, 1])
-                println("TD B11 = $(B11), C11 = $(C11)")
-                rloc_fixed = nothing
+            semis = mooring.p.semis
+            N_MOOR = length(semis) # number of moorings
+            println("Mooring system found: $N_MOOR lines")
 
-                mooring_ = B11
+            if N_MOOR == 1
+                rloc_fixed = ntuple(i -> Vector{RealT}(semis[i].initial_condition.initial_position_top), N_MOOR)
             else
-                semis = mooring.p.semis
-                N_MOOR = length(semis) # number of moorings
-                println("Mooring system found: $N_MOOR lines")
-
-                if N_MOOR == 1
-                    rloc_fixed = ntuple(i -> Vector{RealT}(semis[i].initial_condition.initial_position_top), N_MOOR)
-                else
-                    rloc_fixed = ntuple(i -> Vector{RealT}(semis[i].semis[1].initial_condition.initial_position_top), N_MOOR)
-                end
-                mooring_ = mooring
+                rloc_fixed = ntuple(i -> Vector{RealT}(semis[i].semis[1].initial_condition.initial_position_top), N_MOOR)
             end
+            mooring_ = mooring
 
             # Build restoring matrix C
             C = zeros(RealT, N_MODES, N_MODES) # PARAMETRIZAR
-            # C[1, 1] = C11
+            #C[1, 1] = 0.0
             C[2, 2] = C33
             C[2, 3] = C35
             C[3, 2] = C53
@@ -185,7 +176,7 @@ mutable struct FloatingBodySim{NMODES,NBODY,NOWCs,NVARS,MAT,OWC<:AbstractPTO,EXC
             Mg_Inv = inv(Mg)
             Mg_Inv = SMatrix{N_MODES,N_MODES}(Mg_Inv)
 
-            next_state = PTO_ranges[end][end]
+            next_state = PTO_ranges[end][end] + 1 #!!
             # next_state = 31
             radiation, N_VARS = readRadiation(rad_file, modes, next_state)
 

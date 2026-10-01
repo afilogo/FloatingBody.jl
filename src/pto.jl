@@ -44,7 +44,7 @@ struct WellsTurbine{RealT<:Real} <: AbstractTurbine
         Pi_bep = Pi_Psi_bir(Psi_bep)
         pfa = ρ_ref * diam^5 * Pi_bep
 
-        d_turb_ref = 0.5 
+        d_turb_ref = 0.5
 
         I_turb = I_turb_ref * (diam / d_turb_ref)^5
         new{RealT}(diam, convert(RealT, Psi_max), convert(RealT, Psi_bep), convert(RealT, I_turb), convert(RealT, pfa), convert(RealT, pfb), convert(RealT, P_rated))
@@ -105,24 +105,24 @@ end
 
     Ψ = p_rel / (ρ_inlet * (Ω * turb.diam)^2) / n_series_turb
 
-    Φ = Phi_Psi(turb, Ψ) 
+    Φ = Phi_Psi(turb, Ψ)
     Π = Pi_Psi(turb, Ψ)
 
     pfa = turb.pfa
     pfb = turb.pfb
 
     mass_flow_single = ρ_inlet * Ω * turb.diam^3 * Φ
-    mass_flow_total = mass_flow_single * n_paral_turb 
+    mass_flow_total = mass_flow_single * n_paral_turb
 
     P_turb_single = ρ_inlet * Ω^3 * turb.diam^5 * Π
     P_gen_single = pfa * Ω^pfb
 
     varA = dot_V_chamber / V_chamber
     varB = mass_flow_total / mass_chamber
-    denom2_1 = 1.0 / (turb.I_turb * Ω)
+    denom2_1 = 1.0 / (n_series_turb * turb.I_turb * Ω)
 
     du_pto[1] = -γ_GAS * p_abs * (varA + varB)
-    du_pto[2] = (P_turb_single - P_gen_single) * denom2_1
+    du_pto[2] = (n_series_turb * P_turb_single - P_gen_single) * denom2_1
     du_pto[3] = P_turb_single * n_paral_turb * n_series_turb
 
     return nothing
@@ -163,25 +163,25 @@ end
 @inline function Phi_Psi(t::BiradialTurbine, Psi)
     Psi_abs = abs(Psi)
     phi = (0.0 + 539581725.354 * Psi_abs + 638407403.112 * Psi_abs^2) /
-          (844010065.844 + 4360645489.11 * Psi_abs + 468212474.631 * Psi_abs^2 + Psi_abs^3)
+        (844010065.844 + 4360645489.11 * Psi_abs + 468212474.631 * Psi_abs^2 + Psi_abs^3)
     return sign(Psi) * phi
 end
 
 @inline function Pi_Psi(t::BiradialTurbine, Psi)
     Psi_abs = abs(Psi)
     return (-8311615.56473 + 69022248.16 * Psi_abs + 136450487.222 * Psi_abs^2) /
-           (1067882948.21 + 512641214.194 * Psi_abs + 76229.0830089 * Psi_abs^2 + Psi_abs^3)
+        (1067882948.21 + 512641214.194 * Psi_abs + 76229.0830089 * Psi_abs^2 + Psi_abs^3)
 end
 @inline function Pi_Psi_bir(Psi)
     Psi_abs = abs(Psi)
     return (-8311615.56473 + 69022248.16 * Psi_abs + 136450487.222 * Psi_abs^2) /
-           (1067882948.21 + 512641214.194 * Psi_abs + 76229.0830089 * Psi_abs^2 + Psi_abs^3)
+        (1067882948.21 + 512641214.194 * Psi_abs + 76229.0830089 * Psi_abs^2 + Psi_abs^3)
 end
 
 @inline function eta_Psi(t::BiradialTurbine, Psi)
     Psi_abs = abs(Psi)
     return (-0.0698294618409 + 0.408116075959 * Psi_abs + 4.38745266305 * Psi_abs^2) /
-           (0.073510236828 - 0.259269785174 * Psi_abs + 7.08676177897 * Psi_abs^2 + Psi_abs^3)
+        (0.073510236828 - 0.259269785174 * Psi_abs + 7.08676177897 * Psi_abs^2 + Psi_abs^3)
 end
 
 
